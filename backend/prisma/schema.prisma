@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  firstName      String   @map("first_name")
+  lastName       String   @map("last_name")
+  phone          String?
+  membershipType String?  @map("membership_type")
+  passwordHash   String   @map("password_hash")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  attendances     Attendance[]
+  workoutSessions WorkoutSession[]
+
+  @@map("users")
+}
+
+model Attendance {
+  id           String    @id @default(cuid())
+  userId       String    @map("user_id")
+  checkInTime  DateTime  @map("check_in_time")
+  checkOutTime DateTime? @map("check_out_time")
+  sessionType  SessionType @map("session_type")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user            User             @relation(fields: [userId], references: [id])
+  workoutSessions WorkoutSession[]
+
+  @@map("attendance")
+}
+
+model WorkoutSession {
+  id           String   @id @default(cuid())
+  attendanceId String   @map("attendance_id")
+  userId       String   @map("user_id")
+  muscleGroups String[] @map("muscle_groups")
+  notes        String?
+  duration     Int?     // in minutes
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  attendance Attendance @relation(fields: [attendanceId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
+
+  @@map("workout_sessions")
+}
+
+enum SessionType {
+  MORNING
+  EVENING
+}
