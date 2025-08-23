@@ -18,11 +18,10 @@ const generateGymQRCode = async () => {
       errorCorrectionLevel: 'M'
     });
 
-    // Save to qr-display folder (correct path)
+    // Save to qr-display folder
     const outputPath = path.join(__dirname, '../../../qr-display/gym-wall-qr.png');
     fs.writeFileSync(outputPath, qrCodeBuffer);
     
-    console.log('✅ QR Code generated successfully!');
     console.log(`📱 QR Code saved to: ${outputPath}`);
     console.log(`🔗 QR Code URL: ${gymAppUrl}`);
     
@@ -40,6 +39,20 @@ const generateGymQRCode = async () => {
     const svgPath = path.join(__dirname, '../../../qr-display/gym-wall-qr.svg');
     fs.writeFileSync(svgPath, qrCodeSvg);
     console.log(`📄 High-quality SVG saved to: ${svgPath}`);
+    
+    const sizes = [256, 384, 768];
+    for (const size of sizes) {
+      const buffer = await QRCode.toBuffer(gymAppUrl, {
+        type: 'png',
+        width: size,
+        margin: 2,
+        color: { dark: '#000000', light: '#FFFFFF' }
+      });
+      
+      const backupPath = path.join(__dirname, `../../../qr-display/gym-qr-${size}px.png`);
+      fs.writeFileSync(backupPath, buffer);
+      console.log(`📱 Backup QR (${size}px) saved to: ${backupPath}`);
+    }
     
   } catch (error) {
     console.error('❌ Error generating QR code:', error);
