@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { RegisterRequest } from '../types'
+import apiService from '../services/api'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState<RegisterRequest>({
@@ -26,31 +27,14 @@ export default function RegisterPage() {
     setError('')
 
     try {
-      // Phase 2.3 - Quick Registration Implementation
-      // TODO: Replace with actual API call in next phases
+      // Real API call for registration
+      await apiService.register(formData)
       
-      // Simulate user creation and auto-login
-      const newUser = {
-        id: `user_${Date.now()}`,
-        email: formData.email,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: formData.phone,
-        membershipType: formData.membershipType,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-
-      // Save to localStorage for auto-login (Phase 2.3)
-      localStorage.setItem('gymUser', JSON.stringify(newUser))
-      localStorage.setItem('gymToken', `token_${Date.now()}`)
-
       // Redirect to check-in page for immediate check-in
       window.location.href = '/checkin'
 
-    } catch (err) {
-      setError(`Registration failed. Please try again. Error: ${err}`)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.')
     } finally {
       setIsLoading(false)
     }

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { LoginRequest } from '../types'
+import apiService from '../services/api'
 
 export default function LoginPage() {
   const [formData, setFormData] = useState<LoginRequest>({
@@ -22,32 +23,14 @@ export default function LoginPage() {
     setError('')
 
     try {
-      // Phase 2.3 - Existing User Login Implementation
-      // TODO: Replace with actual API call in next phases
-      
-      // Simulate login verification
-      // In real implementation, this would validate against database
-      const existingUser = localStorage.getItem('gymUser')
-      
-      if (!existingUser) {
-        setError('User not found. Please register first or check your credentials.')
-        return
-      }
-
-      const user = JSON.parse(existingUser)
-      if (user.email !== formData.email) {
-        setError('Invalid email or password. Please try again.')
-        return
-      }
-
-      // Successful login - refresh token and redirect
-      localStorage.setItem('gymToken', `token_${Date.now()}`)
+      // Real API call for login
+      await apiService.login(formData)
       
       // Redirect to check-in for immediate check-in
       window.location.href = '/checkin'
 
-    } catch (err) {
-      setError(`Login failed. Please try again. Error: ${err}`)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Login failed. Please try again.')
     } finally {
       setIsLoading(false)
     }
