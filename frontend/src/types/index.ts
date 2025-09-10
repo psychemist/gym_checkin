@@ -29,20 +29,24 @@ export interface WorkoutSession {
   createdAt: string;
 }
 
-export enum SessionType {
-  MORNING = 'MORNING',
-  EVENING = 'EVENING'
-}
+export const SessionType = {
+  MORNING: 'MORNING',
+  EVENING: 'EVENING'
+} as const;
 
-export enum MuscleGroup {
-  CHEST = 'chest',
-  BACK = 'back',
-  SHOULDERS = 'shoulders',
-  ARMS = 'arms',
-  LEGS = 'legs',
-  CORE = 'core',
-  CARDIO = 'cardio'
-}
+export type SessionType = typeof SessionType[keyof typeof SessionType];
+
+export const MuscleGroup = {
+  CHEST: 'chest',
+  BACK: 'back',
+  SHOULDERS: 'shoulders',
+  ARMS: 'arms',
+  LEGS: 'legs',
+  CORE: 'core',
+  CARDIO: 'cardio'
+} as const;
+
+export type MuscleGroup = typeof MuscleGroup[keyof typeof MuscleGroup];
 
 // API Request/Response types
 export interface LoginRequest {

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 
-interface CheckInPageProps {
-  onCheckIn: () => void;
-  onRegister: () => void;
-}
+// interface CheckInPageProps {
+//   onCheckIn: () => void;
+//   onRegister: () => void;
+// }
 
 export default function CheckInPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)

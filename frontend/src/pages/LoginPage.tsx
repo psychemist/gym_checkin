@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { LoginRequest } from '../../../shared/types'
+import type { LoginRequest } from '../types'
 
 export default function LoginPage() {
   const [formData, setFormData] = useState<LoginRequest>({
@@ -43,11 +43,11 @@ export default function LoginPage() {
       // Successful login - refresh token and redirect
       localStorage.setItem('gymToken', `token_${Date.now()}`)
       
-      // Phase 2.3 - Redirect to check-in for immediate check-in
+      // Redirect to check-in for immediate check-in
       window.location.href = '/checkin'
 
     } catch (err) {
-      setError('Login failed. Please try again.')
+      setError(`Login failed. Please try again. Error: ${err}`)
     } finally {
       setIsLoading(false)
     }

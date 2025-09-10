@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { RegisterRequest } from '../../../shared/types'
+import type { RegisterRequest } from '../types'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState<RegisterRequest>({
@@ -50,7 +50,7 @@ export default function RegisterPage() {
       window.location.href = '/checkin'
 
     } catch (err) {
-      setError('Registration failed. Please try again.')
+      setError(`Registration failed. Please try again. Error: ${err}`)
     } finally {
       setIsLoading(false)
     }
