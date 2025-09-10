@@ -3,6 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import authRoutes from './routes/auth';
+import attendanceRoutes from './routes/attendance';
 
 // Load environment variables
 dotenv.config();
@@ -29,18 +31,9 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Temporary placeholder routes
-app.get('/api/auth', (req, res) => {
-  res.json({ message: 'Auth routes coming soon' });
-});
-
-app.get('/api/users', (req, res) => {
-  res.json({ message: 'User routes coming soon' });
-});
-
-app.get('/api/attendance', (req, res) => {
-  res.json({ message: 'Attendance routes coming soon' });
-});
+// API routes
+app.use('/api/auth', authRoutes);
+app.use('/api/attendance', attendanceRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
