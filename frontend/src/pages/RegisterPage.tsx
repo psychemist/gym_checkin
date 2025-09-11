@@ -13,12 +13,20 @@ export default function RegisterPage() {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [profileImage, setProfileImage] = useState<File | null>(null)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     })
+  }
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && file.type.startsWith('image/')) {
+      setProfileImage(file)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,6 +37,13 @@ export default function RegisterPage() {
     try {
       // Real API call for registration
       await apiService.register(formData)
+
+      localStorage.setItem('gymPreferences', JSON.stringify({
+        autoCheckIn: true,
+        notifications: true,
+        theme: 'light',
+        lastRegistered: new Date().toISOString()
+      }))
       
       // Redirect to check-in page for immediate check-in
       window.location.href = '/checkin'
@@ -62,6 +77,31 @@ export default function RegisterPage() {
               </div>
             )}
 
+            <div className="text-center">
+              <div className="relative inline-block">
+                <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center mx-auto mb-2">
+                  {profileImage ? (
+                    <img 
+                      src={URL.createObjectURL(profileImage)} 
+                      alt="Profile" 
+                      className="w-20 h-20 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-gray-500 text-2xl">📸</span>
+                  )}
+                </div>
+                <label className="cursor-pointer text-sm text-primary-600 hover:underline">
+                  Add Photo (Optional)
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -74,6 +114,7 @@ export default function RegisterPage() {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   required
+                  placeholder="Chike"
                 />
               </div>
               <div>
@@ -87,6 +128,7 @@ export default function RegisterPage() {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   required
+                  placeholder="Boyega"
                 />
               </div>
             </div>
@@ -102,6 +144,7 @@ export default function RegisterPage() {
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 required
+                placeholder="chike@olympus.com"
               />
             </div>
 
@@ -117,6 +160,7 @@ export default function RegisterPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 required
                 minLength={6}
+                placeholder="Minimum 6 characters"
               />
             </div>
 
@@ -144,10 +188,9 @@ export default function RegisterPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
                 <option value="">Select membership type</option>
-                <option value="basic">Basic Monthly</option>
-                <option value="premium">Premium Monthly</option>
-                <option value="annual">Annual Membership</option>
-                <option value="student">Student Discount</option>
+                <option value="basic">Basic Monthly - ₦17,000/month</option>
+                <option value="premium">Premium Monthly - ₦37,000/month</option>
+                <option value="annual">Annual Membership - ₦200,000/year</option>
               </select>
             </div>
 
@@ -170,14 +213,6 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* Quick Info */}
-        <div className="mt-4 card bg-green-50 border-green-200">
-          <div className="text-center">
-            <p className="text-sm text-green-600">
-              🚀 <strong>Fast Track:</strong> Register now and get checked in immediately!
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   )

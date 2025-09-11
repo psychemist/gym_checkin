@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { LoginRequest } from '../types'
 import apiService from '../services/api'
 
@@ -9,6 +9,15 @@ export default function LoginPage() {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [rememberMe, setRememberMe] = useState(true)
+  const [savedEmails, setSavedEmails] = useState<string[]>([])
+
+  useEffect(() => {
+    const savedCredentials = localStorage.getItem('gymSavedEmails')
+    if (savedCredentials) {
+      setSavedEmails(JSON.parse(savedCredentials))
+    }
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -17,14 +26,33 @@ export default function LoginPage() {
     })
   }
 
+  const handleEmailSelect = (email: string) => {
+    setFormData({ ...formData, email })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
 
     try {
-      // Real API call for login
+      // Enhanced login with remember me functionality
       await apiService.login(formData)
+      
+      if (rememberMe) {
+        const currentSavedEmails = JSON.parse(localStorage.getItem('gymSavedEmails') || '[]')
+        const updatedEmails = [formData.email, ...currentSavedEmails.filter((email: string) => email !== formData.email)].slice(0, 5)
+        localStorage.setItem('gymSavedEmails', JSON.stringify(updatedEmails))
+        
+        // Save user preferences
+        localStorage.setItem('gymPreferences', JSON.stringify({
+          autoCheckIn: true,
+          notifications: true,
+          theme: 'light',
+          lastLogin: new Date().toISOString(),
+          rememberLogin: true
+        }))
+      }
       
       // Redirect to check-in for immediate check-in
       window.location.href = '/checkin'
@@ -58,6 +86,29 @@ export default function LoginPage() {
               </div>
             )}
 
+            {savedEmails.length > 0 && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Quick Login
+                </label>
+                <div className="grid grid-cols-1 gap-2 mb-4">
+                  {savedEmails.slice(0, 3).map((email, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => handleEmailSelect(email)}
+                      className="text-left p-2 bg-gray-50 hover:bg-gray-100 rounded border text-sm transition-colors"
+                    >
+                      📧 {email}
+                    </button>
+                  ))}
+                </div>
+                <div className="text-center text-sm text-gray-500 mb-4">
+                  Or sign in manually below
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
                 Email Address
@@ -69,6 +120,7 @@ export default function LoginPage() {
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 required
+                placeholder="chike@boyega.com"
               />
             </div>
 
@@ -83,7 +135,21 @@ export default function LoginPage() {
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 required
+                placeholder="Enter your password"
               />
+            </div>
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              />
+              <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
+                Remember me for faster check-ins
+              </label>
             </div>
 
             <button
@@ -111,14 +177,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Quick Access Info */}
-        <div className="mt-4 card bg-blue-50 border-blue-200">
-          <div className="text-center">
-            <p className="text-sm text-blue-600">
-              💡 <strong>Quick Access:</strong> Your login info is saved for faster check-ins!
-            </p>
-          </div>
-        </div>
+
       </div>
     </div>
   )
