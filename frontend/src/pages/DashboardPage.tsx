@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import apiService from '../services/api'
+import storageService from '../services/storage'
 
 interface DashboardStats {
   totalWorkouts: number
@@ -35,6 +36,7 @@ export default function DashboardPage() {
   const [recentAttendance, setRecentAttendance] = useState<RecentAttendance[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'goals' | 'profile'>('overview')
+  const [preferences, setPreferences] = useState(storageService.getUserPreferences())
 
   useEffect(() => {
     loadDashboardData()
@@ -43,6 +45,10 @@ export default function DashboardPage() {
   const loadDashboardData = async () => {
     try {
       setIsLoading(true)
+      
+      // Get user preferences from storage service
+      const userPrefs = storageService.getUserPreferences()
+      setPreferences(userPrefs)
       
       // Get user info
       const userInfo = apiService.getCurrentUser()
@@ -100,8 +106,8 @@ export default function DashboardPage() {
         longestStreak,
         averageSessionLength: Math.round(averageSessionLength),
         favoriteTimeSlot,
-        monthlyGoal: 12,
-        monthlyProgress: Math.round((thisMonth / 12) * 100)
+        monthlyGoal: userPrefs.monthlyGoal, // Use from preferences
+        monthlyProgress: Math.round((thisMonth / userPrefs.monthlyGoal) * 100)
       })
 
     } catch (error) {
@@ -109,6 +115,28 @@ export default function DashboardPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const updateGoal = async (newMonthlyGoal: number) => {
+    const updatedPrefs = { ...preferences, monthlyGoal: newMonthlyGoal }
+    storageService.setUserPreferences(updatedPrefs)
+    setPreferences(updatedPrefs)
+    
+    // Recalculate progress with new goal
+    setStats(prev => ({
+      ...prev,
+      monthlyGoal: newMonthlyGoal,
+      monthlyProgress: Math.round((prev.thisMonth / newMonthlyGoal) * 100)
+    }))
+  }
+
+  const togglePreference = (key: keyof typeof preferences) => {
+    const updatedPrefs = {
+      ...preferences,
+      [key]: !preferences[key]
+    }
+    storageService.setUserPreferences(updatedPrefs)
+    setPreferences(updatedPrefs)
   }
 
   const formatDate = (dateString: string) => {
@@ -287,18 +315,52 @@ export default function DashboardPage() {
                     <div className="font-medium">Workout Frequency</div>
                     <div className="text-sm text-gray-600">Visit the gym {stats.monthlyGoal} times this month</div>
                   </div>
-                  <div className="text-2xl">
-                    {stats.monthlyProgress >= 100 ? '✅' : '🎯'}
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => updateGoal(Math.max(1, stats.monthlyGoal - 1))}
+                      className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-sm font-bold hover:bg-gray-300"
+                    >
+                      -
+                    </button>
+                    <span className="font-bold text-lg w-8 text-center">{stats.monthlyGoal}</span>
+                    <button
+                      onClick={() => updateGoal(stats.monthlyGoal + 1)}
+                      className="w-8 h-8 bg-primary-200 rounded-full flex items-center justify-center text-sm font-bold hover:bg-primary-300"
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
                 
                 <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
                   <div>
-                    <div className="font-medium">Consistency</div>
-                    <div className="text-sm text-gray-600">Maintain a {stats.currentStreak}+ day streak</div>
+                    <div className="font-medium">Weekly Goal</div>
+                    <div className="text-sm text-gray-600">Visit {preferences.weeklyGoal} times per week</div>
                   </div>
-                  <div className="text-2xl">
-                    {stats.currentStreak >= 7 ? '🔥' : '⏰'}
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => {
+                        const newWeeklyGoal = Math.max(1, preferences.weeklyGoal - 1)
+                        const updatedPrefs = { ...preferences, weeklyGoal: newWeeklyGoal }
+                        storageService.setUserPreferences(updatedPrefs)
+                        setPreferences(updatedPrefs)
+                      }}
+                      className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-sm font-bold hover:bg-gray-300"
+                    >
+                      -
+                    </button>
+                    <span className="font-bold text-lg w-8 text-center">{preferences.weeklyGoal}</span>
+                    <button
+                      onClick={() => {
+                        const newWeeklyGoal = preferences.weeklyGoal + 1
+                        const updatedPrefs = { ...preferences, weeklyGoal: newWeeklyGoal }
+                        storageService.setUserPreferences(updatedPrefs)
+                        setPreferences(updatedPrefs)
+                      }}
+                      className="w-8 h-8 bg-primary-200 rounded-full flex items-center justify-center text-sm font-bold hover:bg-primary-300"
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
               </div>
@@ -310,7 +372,7 @@ export default function DashboardPage() {
                 {[
                   { icon: '🎯', title: 'First Workout', description: 'Complete your first session', achieved: stats.totalWorkouts > 0 },
                   { icon: '🔥', title: 'Week Warrior', description: '7-day streak', achieved: stats.longestStreak >= 7 },
-                  { icon: '💪', title: 'Monthly Master', description: '12 workouts in a month', achieved: stats.thisMonth >= 12 },
+                  { icon: '💪', title: 'Monthly Master', description: `${preferences.monthlyGoal} workouts in a month`, achieved: stats.thisMonth >= preferences.monthlyGoal },
                   { icon: '⭐', title: 'Gym Regular', description: '50 total workouts', achieved: stats.totalWorkouts >= 50 }
                 ].map((achievement, index) => (
                   <div key={index} className={`p-3 rounded-lg border-2 ${achievement.achieved ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
@@ -362,18 +424,33 @@ export default function DashboardPage() {
               <h3 className="gym-header">Preferences</h3>
               <div className="space-y-3">
                 {[
-                  { label: 'Auto Check-in', description: 'Automatically check in when you arrive', enabled: true },
-                  { label: 'Notifications', description: 'Get reminders and updates', enabled: true },
-                  { label: 'Weekly Summary', description: 'Receive weekly progress emails', enabled: false }
+                  { 
+                    key: 'autoCheckIn' as keyof typeof preferences, 
+                    label: 'Auto Check-in', 
+                    description: 'Automatically check in when you arrive' 
+                  },
+                  { 
+                    key: 'notifications' as keyof typeof preferences, 
+                    label: 'Notifications', 
+                    description: 'Get reminders and updates' 
+                  },
+                  { 
+                    key: 'rememberLogin' as keyof typeof preferences, 
+                    label: 'Remember Login', 
+                    description: 'Stay signed in for faster access' 
+                  }
                 ].map((pref, index) => (
                   <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                     <div>
                       <div className="font-medium text-sm">{pref.label}</div>
                       <div className="text-xs text-gray-600">{pref.description}</div>
                     </div>
-                    <div className={`w-12 h-6 rounded-full flex items-center ${pref.enabled ? 'bg-primary-600' : 'bg-gray-300'}`}>
-                      <div className={`w-5 h-5 bg-white rounded-full transition-transform ${pref.enabled ? 'translate-x-6' : 'translate-x-1'}`}></div>
-                    </div>
+                    <button
+                      onClick={() => togglePreference(pref.key)}
+                      className={`w-12 h-6 rounded-full flex items-center transition-colors ${preferences[pref.key] ? 'bg-primary-600' : 'bg-gray-300'}`}
+                    >
+                      <div className={`w-5 h-5 bg-white rounded-full transition-transform ${preferences[pref.key] ? 'translate-x-6' : 'translate-x-1'}`}></div>
+                    </button>
                   </div>
                 ))}
               </div>
