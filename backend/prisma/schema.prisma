@@ -52,7 +52,7 @@ model WorkoutSession {
   id           String   @id @default(cuid())
   attendanceId String   @map("attendance_id")
   userId       String   @map("user_id")
-  muscleGroups String?  @map("muscle_groups") // Changed from String[] to String - will store comma-separated values
+  muscleGroups String?  @map("muscle_groups")
   notes        String?
   duration     Int?     // in minutes
   createdAt    DateTime @default(now()) @map("created_at")
